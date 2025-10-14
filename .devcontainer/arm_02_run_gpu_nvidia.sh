@@ -28,5 +28,6 @@ docker run -it \
     --privileged \
     --network=host \
     --name="ARM_02" \
+    --volume=/home/gwidon/Documents/ARM/src:/arm_ws/src \
     arm/lab02 \
     /bin/bash
