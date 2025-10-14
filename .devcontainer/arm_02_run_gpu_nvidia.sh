@@ -31,3 +31,5 @@ docker run -it \
     --volume=/home/gwidon/Documents/ARM/src:/arm_ws/src \
     arm/lab02 \
     /bin/bash
+    
+ cd src && git clone https://github.com/kamilmlodzikowski/arm02_sim.git

@@ -23,7 +23,7 @@ WORKDIR /arm_ws
 RUN /bin/bash -c '. /opt/ros/humble/setup.bash; colcon build --symlink-install'
 
 WORKDIR /arm_ws/src
-RUN git clone https://github.com/kamilmlodzikowski/arm02_sim.git
+#RUN git clone https://github.com/kamilmlodzikowski/arm02_sim.git
 WORKDIR /arm_ws
 RUN /bin/bash -c '. /opt/ros/humble/setup.bash; colcon build --symlink-install'
 
