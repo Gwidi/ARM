@@ -1,0 +1,1 @@
+docker exec -it ARM_02 bash
