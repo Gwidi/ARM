@@ -11,6 +11,7 @@ find_package(ament_cmake_python REQUIRED)
 find_package(rclpy REQUIRED)
 
 install(PROGRAMS
+  scripts/forward_action_server.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
