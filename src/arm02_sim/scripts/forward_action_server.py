@@ -4,6 +4,7 @@ import time
 import rclpy
 from rclpy.action import ActionServer
 from rclpy.node import Node
+from rclpy.executors import MultiThreadedExecutor
 
 from arm02.action import Forward
 from sensor_msgs.msg import LaserScan
@@ -44,7 +45,7 @@ class ForwardActionServer(Node):
         while np.abs(goal_handle.request.goal_distance - self.current_distance) > goal_handle.request.precision and (time.time() - start_time) < goal_handle.request.timeout:
             if self.current_distance is not None:
                 if goal_handle.request.goal_distance > self.current_distance:
-                    self.logger().info('Obstacle too close! Stopping robot.')
+                    self.get_logger().info('Obstacle too close! Stopping robot.')
                 elif goal_handle.request.goal_distance < self.current_distance:
                     self.move_forward()
             
@@ -59,7 +60,7 @@ class ForwardActionServer(Node):
         result = Forward.Result()
         result.final_precision = np.abs(goal_handle.request.goal_distance - self.current_distance)
         result.total_time = time.time() - start_time
-        result.succeded = np.abs(goal_handle.request.goal_distance - self.current_distance) <= goal_handle.request.precision
+        result.succeeded = np.abs(goal_handle.request.goal_distance - self.current_distance) <= goal_handle.request.precision
         
         return result
     
@@ -78,8 +79,10 @@ def main(args=None):
     rclpy.init(args=args)
 
     forward_action_server = ForwardActionServer()
+    executor = MultiThreadedExecutor()
+    executor.add_node(forward_action_server)
 
-    rclpy.spin(forward_action_server)
+    executor.spin()
 
 
 if __name__ == '__main__':
