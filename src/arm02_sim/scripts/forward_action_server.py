@@ -5,7 +5,7 @@ import rclpy
 from rclpy.action import ActionServer
 from rclpy.node import Node
 
-from arm02_sim.action import Forward
+from arm02.action import Forward
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Twist
 import numpy as np
@@ -23,6 +23,12 @@ class ForwardActionServer(Node):
             self.execute_callback)
         self.get_logger().info('Forward Action Server is running...')
         self.current_distance = None
+        self.scan_subscription = self.create_subscription(
+            LaserScan,
+            '/laser_scan',
+            self.scan_callback,
+            10)
+        self.cmd_vel_publisher = self.create_publisher(Twist, '/cmd_vel', 10)
 
     def scan_callback(self, msg):
         self.current_distance = min(msg.ranges)
@@ -38,15 +44,14 @@ class ForwardActionServer(Node):
         while np.abs(goal_handle.request.goal_distance - self.current_distance) > goal_handle.request.precision and (time.time() - start_time) < goal_handle.request.timeout:
             if self.current_distance is not None:
                 if goal_handle.request.goal_distance > self.current_distance:
-                    velocity = Twist()
-                    velocity.linear.x = -0.1
+                    self.logger().info('Obstacle too close! Stopping robot.')
                 elif goal_handle.request.goal_distance < self.current_distance:
-                    velocity = Twist()
-                    velocity.linear.x = 0.1
+                    self.move_forward()
             
                 feedback_msg.current_distance = self.current_distance
                 goal_handle.publish_feedback(feedback_msg)
-                self.cmd_vel_publisher.publish(velocity)
+        self.stop()
+        
             
 
         goal_handle.succeed()
@@ -54,8 +59,19 @@ class ForwardActionServer(Node):
         result = Forward.Result()
         result.final_precision = np.abs(goal_handle.request.goal_distance - self.current_distance)
         result.total_time = time.time() - start_time
+        result.succeded = np.abs(goal_handle.request.goal_distance - self.current_distance) <= goal_handle.request.precision
         
         return result
+    
+    def move_forward(self, speed=1.0):
+        velocity = Twist()
+        velocity.linear.x = speed
+        self.cmd_vel_publisher.publish(velocity)
+
+    def stop(self):
+        velocity = Twist()
+        velocity.linear.x = 0.0
+        self.cmd_vel_publisher.publish(velocity)
 
 
 def main(args=None):
