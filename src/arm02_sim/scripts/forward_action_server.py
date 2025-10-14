@@ -56,17 +56,14 @@ class ForwardActionServer(Node):
         self.stop()
         
         timeout = (time.time() - start_time) >= goal_handle.request.timeout
-        precision_achieved = goal_handle.request.goal_distance - self.current_distance <= goal_handle.request.precision
 
-        if precision_achieved and not timeout:
-            goal_handle.succeed()
-        else:   
-            goal_handle.abort()
+        goal_handle.succeed()
 
         result = Forward.Result()
         result.final_precision = np.abs(goal_handle.request.goal_distance - self.current_distance)
+
         result.total_time = time.time() - start_time
-        result.succeeded = precision_achieved and not timeout
+        result.succeeded =  True if result.final_precision <= goal_handle.request.precision and not timeout else False
         
         return result
     
