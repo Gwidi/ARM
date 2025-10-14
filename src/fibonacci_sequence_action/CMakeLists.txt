@@ -29,4 +29,12 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "action/Fibonacci.action"
 )
 
+find_package(ament_cmake_python REQUIRED)
+find_package(rclpy REQUIRED)
+
+install(PROGRAMS
+  scripts/fibonacci_action_server.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 ament_package()
