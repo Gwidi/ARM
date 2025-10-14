@@ -1,0 +1,10 @@
+float32 goal_distance
+float32 timeout
+float32 precision
+---
+bool succeeded
+float32 final_precision
+float32 total_time
+---
+float32 current_distance
+float32 estimated_time
