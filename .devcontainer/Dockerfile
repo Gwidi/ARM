@@ -33,3 +33,4 @@ RUN echo "source /arm_ws/install/setup.bash" >> ~/.bashrc
 RUN echo 'export TURTLEBOT3=waffle' >> ~/.bashrc
 RUN echo "source /usr/share/gazebo/setup.bash" >> ~/.bashrc
 RUN echo "source /usr/share/gazebo-11/setup.bash" >> ~/.bashrc
+RUN echo "export ROS_DOMAIN_ID=70" >> ~/.bashrc
