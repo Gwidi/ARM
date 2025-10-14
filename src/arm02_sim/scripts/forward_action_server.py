@@ -24,6 +24,7 @@ class ForwardActionServer(Node):
             self.execute_callback)
         self.get_logger().info('Forward Action Server is running...')
         self.current_distance = None
+        self.speed = 0.1  # m/s
         self.scan_subscription = self.create_subscription(
             LaserScan,
             '/laser_scan',
@@ -47,24 +48,29 @@ class ForwardActionServer(Node):
                 if goal_handle.request.goal_distance > self.current_distance:
                     self.get_logger().info('Obstacle too close! Stopping robot.')
                 elif goal_handle.request.goal_distance < self.current_distance:
-                    self.move_forward()
+                    self.move_forward(self.speed)
             
                 feedback_msg.current_distance = self.current_distance
+                feedback_msg.estimated_time = np.abs(self.current_distance - goal_handle.request.goal_distance) / self.speed
                 goal_handle.publish_feedback(feedback_msg)
         self.stop()
         
-            
+        timeout = (time.time() - start_time) >= goal_handle.request.timeout
+        precision_achieved = goal_handle.request.goal_distance - self.current_distance <= goal_handle.request.precision
 
-        goal_handle.succeed()
+        if precision_achieved and not timeout:
+            goal_handle.succeed()
+        else:   
+            goal_handle.abort()
 
         result = Forward.Result()
         result.final_precision = np.abs(goal_handle.request.goal_distance - self.current_distance)
         result.total_time = time.time() - start_time
-        result.succeeded = np.abs(goal_handle.request.goal_distance - self.current_distance) <= goal_handle.request.precision
+        result.succeeded = precision_achieved and not timeout
         
         return result
     
-    def move_forward(self, speed=1.0):
+    def move_forward(self, speed=0.1):
         velocity = Twist()
         velocity.linear.x = speed
         self.cmd_vel_publisher.publish(velocity)
