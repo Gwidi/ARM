@@ -1,0 +1,6 @@
+1. Po zwiększeniu beam_skip_distance z 0.5 do 1.0 przy do_beamskip ustawionym na True zauważyłem, że zmienia się odległość przeskakiwania wiązki lasera.
+2. Po zmianie laser_max_range i laser_min_range zmienia się maksymalną oraz minimalną odległość wiązki (zakres odległości z której odczytywany jest pomiar)
+3. Zmieniłem max_beans z 60 do 120 - zwiększyła się liczba wiązek, czyli gęstość odczytywanych punktów
+4. Zmienna max_particles odpowiada za ilość wykorzystywanych cząsteczek do estymacji pozycji robota.
+5. resample_interval to ilość potrzebnych aktualizacji filtra aby wykonać ponowne próbkowanie
+6. update_min_a i update_min_d to ruch translacyjny oraz ruch rotacyjny który trzeba wykonać aby aktualizować filter.
