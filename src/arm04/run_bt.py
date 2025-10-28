@@ -21,8 +21,8 @@ def create_root() -> py_trees.behaviour.Behaviour:
     # zachowanie Rotate, powoduje obrót robota w miejscu.
     rotation = behaviours.Rotate(name="RotateRobot") 
 
-    # TODO: Utworzenie zachowania Drive (należy zaimplementować), które wykonuje ruch do przodu.
-    # driving = behaviours.Drive()
+    # Utworzenie zachowania Drive (należy zaimplementować), które wykonuje ruch do przodu.
+    driving = behaviours.Drive(name="MoveForward")
     
     # zachowanie subskrybujące skan lasera z robota i przekazujące 
     # go do Tablicy (przekazuje wyłącznie pole "ranges")
@@ -39,16 +39,29 @@ def create_root() -> py_trees.behaviour.Behaviour:
     def check_distance_in_front(blackboard: py_trees.blackboard.Blackboard) -> bool:
         DISTANCE_THRESHOLD = 3
         scan = blackboard.scan
-        print(scan)
-        # TODO: Sprawdzanie czy dystans jest większy niż 3 metry.
+        # print(scan)
+        scan_length = len(scan)
+        range_per_index = 360 / scan_length
+        indexes_for_10_degrees = int(10 / range_per_index)  
+
+        front_ranges = []
+
+        for i in range(-indexes_for_10_degrees, indexes_for_10_degrees + 1):
+            index = i % scan_length  # obsługa cykliczności dla ujemnych indeksów
+            front_ranges.append(scan[index])
+
+        # Sprawdzanie czy dystans jest większy niż 3 metry.
+        if min(front_ranges) > DISTANCE_THRESHOLD:
+            return True
         return False
     
-    # TODO: Dodanie dekoratora EternalGuard z warunkiem dystansu do przeszkody do jazdy na wprost.
-    # distance_check = py_trees.decorators.EternalGuard() 
+    # Dodanie dekoratora EternalGuard z warunkiem dystansu do przeszkody do jazdy na wprost.
+    distance_check = py_trees.decorators.EternalGuard("Distance Check", driving, check_distance_in_front, blackboard_keys=['scan']) 
     
     # TODO: Modyfikacja drzewa tak, żeby było możliwe realizowanie założeń z instrukcji.
     root.add_child(laser2BB)
     root.add_child(rotation)
+    root.add_child(distance_check)
     
     # Zwracanie korzenia i połączonych do niego dzieci
     return root
