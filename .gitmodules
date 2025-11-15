@@ -1,0 +1,15 @@
+[submodule "src/arm05/DynamixelSDK"]
+	path = src/arm05/DynamixelSDK
+	url = https://github.com/ROBOTIS-GIT/DynamixelSDK.git
+[submodule "src/arm05/turtlebot3_msgs"]
+	path = src/arm05/turtlebot3_msgs
+	url = https://github.com/ROBOTIS-GIT/turtlebot3_msgs.git
+[submodule "src/arm05/turtlebot3"]
+	path = src/arm05/turtlebot3
+	url = https://github.com/ROBOTIS-GIT/turtlebot3.git
+[submodule "src/arm05/turtlebot3_simulations"]
+	path = src/arm05/turtlebot3_simulations
+	url = https://github.com/ROBOTIS-GIT/turtlebot3_simulations.git
+[submodule "src/arm05/arm05_sim"]
+	path = src/arm05/arm05_sim
+	url = https://github.com/kamilmlodzikowski/arm05_sim.git
