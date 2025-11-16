@@ -13,3 +13,7 @@
 [submodule "src/arm05/ros2_aruco"]
 	path = src/arm05/ros2_aruco
 	url = https://github.com/JMU-ROBOTICS-VIVA/ros2_aruco.git
+[submodule "src/arm05/arm05_sim"]
+	path = src/arm05/arm05_sim
+	url = https://github.com/kamilmlodzikowski/arm05_sim.git
+	branch = jazzy
