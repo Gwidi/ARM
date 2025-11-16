@@ -1,18 +1,23 @@
 [submodule "src/arm05/DynamixelSDK"]
 	path = src/arm05/DynamixelSDK
 	url = https://github.com/ROBOTIS-GIT/DynamixelSDK.git
+	branch = jazzy
 [submodule "src/arm05/turtlebot3_msgs"]
 	path = src/arm05/turtlebot3_msgs
 	url = https://github.com/ROBOTIS-GIT/turtlebot3_msgs.git
+	branch = jazzy
 [submodule "src/arm05/turtlebot3"]
 	path = src/arm05/turtlebot3
 	url = https://github.com/ROBOTIS-GIT/turtlebot3.git
+	branch = jazzy
 [submodule "src/arm05/turtlebot3_simulations"]
 	path = src/arm05/turtlebot3_simulations
 	url = https://github.com/ROBOTIS-GIT/turtlebot3_simulations.git
+	branch = jazzy
 [submodule "src/arm05/ros2_aruco"]
 	path = src/arm05/ros2_aruco
 	url = https://github.com/JMU-ROBOTICS-VIVA/ros2_aruco.git
+	branch = jazzy
 [submodule "src/arm05/arm05_sim"]
 	path = src/arm05/arm05_sim
 	url = https://github.com/kamilmlodzikowski/arm05_sim.git
