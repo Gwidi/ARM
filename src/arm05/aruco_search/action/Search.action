@@ -1,0 +1,7 @@
+bool start
+float32 timeout
+---
+int32[] aruco_ids
+geometry_msgs/Pose[] aruco_poses
+---
+int32[] remaining_ids
