@@ -1,0 +1,3 @@
+1. W RTAB_MAB 3 okna po lewej w kolejności od góry to klatka do której dopasowywana jest z klatka wyświetlaną w drugim oknie w algorytmi loop closure detection. W oknie na samym dole wyświetlana jest wykrywane są dopasowywane cechy obrazu.
+2. Kwadraty rysowane na ścieżce to węzły w grafie pozy. Składają się z pozycji, orientacji , danych sensorycznych i sygnatury.
+3. Niebieskie linie to połączenia sąsiedzkie. Łączą one kolejne węzły (punkty) w kolejności chronologicznej. Czerwone linie to połączenia globalne (domknięcia pętli). Pojawiają się w momencie, gdy algorytm rozpozna znane miejsce.
