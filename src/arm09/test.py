@@ -6,6 +6,9 @@ from mediapipe import solutions
 from mediapipe.framework.formats import landmark_pb2
 import numpy as np
 from kalman_filter import Kalman_Filtering
+from mediapipe.tasks.python.components.containers import landmark as landmark_module
+from mediapipe.tasks.python.components.containers import landmark_detection_result
+from time import perf_counter
 
 MARGIN = 10  # pixels
 FONT_SIZE = 1
@@ -49,79 +52,116 @@ def draw_landmarks_on_image(rgb_image, detection_result):
   return annotated_image
 
 def main():
-    base_options = mp_python.BaseOptions(model_asset_path="models/hand_landmarker.task")
-    options = vision.HandLandmarkerOptions(
-        base_options=base_options,
-        num_hands=1,
-        running_mode=vision.RunningMode.IMAGE,
-    )
-    detector = vision.HandLandmarker.create_from_options(options)
+  base_options = mp_python.BaseOptions(model_asset_path="models/hand_landmarker.task")
+  options = vision.HandLandmarkerOptions(
+      base_options=base_options,
+      num_hands=1,
+      running_mode=vision.RunningMode.IMAGE,
+  )
+  detector = vision.HandLandmarker.create_from_options(options)
 
-    cap = cv2.VideoCapture(0)
+  cap = cv2.VideoCapture(0)
 
-    # Pobierz wymiary obrazu
-    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+  # Pobierz wymiary obrazu
+  width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+  height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-    # Utwórz 21 instancji filtra Kalmana, po jednej dla każdego punktu dłoni
-    kalman_filters = []
-    for i in range(21):
-        kf = Kalman_Filtering(n_points=1)
-        kf.initialize()
-        kalman_filters.append(kf)
+  # Utwórz 21 instancji filtra Kalmana, po jednej dla każdego punktu dłoni
+  kalman_filters = []
+  for i in range(21):
+      kf = Kalman_Filtering(n_points=1)
+      kf.initialize()
+      kalman_filters.append(kf)
+  prev_time = None
+  last_handedness = None
 
+  while cap.isOpened():
+      current_time = perf_counter()
 
-    while cap.isOpened():
-        ret, frame = cap.read()
-        if not ret:
-            print("Nie można odczytać z kamery")
-            break
+      if prev_time is not None:
+        dt = current_time - prev_time
+      else:
+        dt = 0.033  # Domyślnie ~30 FPS dla pierwszej klatki
         
-        # Konwertuj BGR (OpenCV) do RGB (MediaPipe)
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+      prev_time = current_time
+
+      ret, frame = cap.read()
+      if not ret:
+          print("Nie można odczytać z kamery")
+          break
+      
+      # Konwertuj BGR (OpenCV) do RGB (MediaPipe)
+      frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+      
+      # Utwórz obiekt MediaPipe Image
+      mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame_rgb)
+      
+      # Detekcja dłoni
+      result = detector.detect(mp_image)
+      
+      # Rysuj punkty na frame'ie
+      if result.hand_landmarks:
+        last_handedness = result.handedness
+          
+        # Utwórz nową listę wygładzonych landmarków
+        smoothed_landmarks = []
+
+        for idx in range(len(result.hand_landmarks[0])):
+          landmark = result.hand_landmarks[0][idx]
+
+          point = np.array([landmark.x*width, landmark.y*height], np.float32)
+          print(point)
+
+          # Przepuść przez filtr Kalmana
+          smoothed = kalman_filters[idx].predict(point, dt)
+          # Konwertuj z powrotem na znormalizowane współrzędne
+          smoothed_x = smoothed[0] / width
+          smoothed_y = smoothed[1] / height
+
+          smoothed_landmark = type(landmark)(x=float(smoothed_x), y=float(smoothed_y), z=landmark.z)
+          smoothed_landmarks.append(smoothed_landmark)
         
-        # Utwórz obiekt MediaPipe Image
-        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame_rgb)
+        # Zastąp oryginalne landmarki wygładzonymi
+        result.hand_landmarks[0] = smoothed_landmarks              
+        frame = draw_landmarks_on_image(frame, result)
+      else:
+        # Dłoń NIE wykryta - wykonaj tylko predict() bez correct()
+        predicted_landmarks = []
         
-        # Detekcja dłoni
-        result = detector.detect(mp_image)
-        
-        # Rysuj punkty na frame'ie
-        if result.hand_landmarks:
+        for idx in range(21):
+          # Wywołaj tylko predict() bez podawania pomiarów
+          smoothed = kalman_filters[idx].predict_only(dt)
             
-            # Utwórz nową listę wygładzonych landmarków
-            smoothed_landmarks = []
+          # Konwertuj na znormalizowane współrzędne
+          smoothed_x = smoothed[0] / width
+          smoothed_y = smoothed[1] / height
+          
+          # Utwórz landmark z przewidywaną pozycją
+          
+          predicted_landmark = landmark_module.NormalizedLandmark(
+              x=float(smoothed_x), 
+              y=float(smoothed_y), 
+              z=0.0
+          )
+          predicted_landmarks.append(predicted_landmark)
+          
+        # Rysuj przewidywane punkty
+        result.hand_landmarks = [predicted_landmarks]
+        result.handedness = last_handedness if last_handedness is not None else []
+        frame = draw_landmarks_on_image(frame, result) if last_handedness is not None else frame
+          
+      
+      
+      # Wyświetl obraz
+      cv2.imshow('Hand Tracking', frame)
+      
+      # Wyjdź po naciśnięciu 'q'
+      if cv2.waitKey(1) & 0xFF == ord('q'):
+          break
 
-            for idx in range(len(result.hand_landmarks[0])):
-                  landmark = result.hand_landmarks[0][idx]
-
-                  point = np.array([landmark.x*width, landmark.y*height], np.float32)
-                  print(point)
-
-                  # Przepuść przez filtr Kalmana
-                  smoothed = kalman_filters[idx].predict(point)
-                  # Konwertuj z powrotem na znormalizowane współrzędne
-                  smoothed_x = smoothed[0] / width
-                  smoothed_y = smoothed[1] / height
-
-                  smoothed_landmark = type(landmark)(x=float(smoothed_x), y=float(smoothed_y), z=landmark.z)
-                  smoothed_landmarks.append(smoothed_landmark)
-            
-            # Zastąp oryginalne landmarki wygładzonymi
-            result.hand_landmarks[0] = smoothed_landmarks              
-
-            frame = draw_landmarks_on_image(frame, result)
-        
-        # Wyświetl obraz
-        cv2.imshow('Hand Tracking', frame)
-        
-        # Wyjdź po naciśnięciu 'q'
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-    # Zwolnij zasoby
-    cap.release()
-    cv2.destroyAllWindows()
+  # Zwolnij zasoby
+  cap.release()
+  cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    main()
+  main()
