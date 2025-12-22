@@ -5,6 +5,7 @@ import cv2
 from mediapipe import solutions
 from mediapipe.framework.formats import landmark_pb2
 import numpy as np
+from kalman_filter import Kalman_Filtering
 
 MARGIN = 10  # pixels
 FONT_SIZE = 1
@@ -58,6 +59,17 @@ def main():
 
     cap = cv2.VideoCapture(0)
 
+    # Pobierz wymiary obrazu
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+    # Utwórz 21 instancji filtra Kalmana, po jednej dla każdego punktu dłoni
+    kalman_filters = []
+    for i in range(21):
+        kf = Kalman_Filtering(n_points=1)
+        kf.initialize()
+        kalman_filters.append(kf)
+
 
     while cap.isOpened():
         ret, frame = cap.read()
@@ -76,6 +88,28 @@ def main():
         
         # Rysuj punkty na frame'ie
         if result.hand_landmarks:
+            
+            # Utwórz nową listę wygładzonych landmarków
+            smoothed_landmarks = []
+
+            for idx in range(len(result.hand_landmarks[0])):
+                  landmark = result.hand_landmarks[0][idx]
+
+                  point = np.array([landmark.x*width, landmark.y*height], np.float32)
+                  print(point)
+
+                  # Przepuść przez filtr Kalmana
+                  smoothed = kalman_filters[idx].predict(point)
+                  # Konwertuj z powrotem na znormalizowane współrzędne
+                  smoothed_x = smoothed[0] / width
+                  smoothed_y = smoothed[1] / height
+
+                  smoothed_landmark = type(landmark)(x=float(smoothed_x), y=float(smoothed_y), z=landmark.z)
+                  smoothed_landmarks.append(smoothed_landmark)
+            
+            # Zastąp oryginalne landmarki wygładzonymi
+            result.hand_landmarks[0] = smoothed_landmarks              
+
             frame = draw_landmarks_on_image(frame, result)
         
         # Wyświetl obraz
