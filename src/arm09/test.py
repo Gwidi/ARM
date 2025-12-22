@@ -75,6 +75,10 @@ def main():
   prev_time = None
   last_handedness = None
 
+  # Pusta macierz do rysowania
+  canvas = np.zeros((height, width, 3), dtype=np.uint8)
+  prev_draw_point = None
+
   while cap.isOpened():
       current_time = perf_counter()
 
@@ -99,6 +103,8 @@ def main():
       # Detekcja dłoni
       result = detector.detect(mp_image)
       
+      draw_point = None
+
       # Rysuj punkty na frame'ie
       if result.hand_landmarks:
         last_handedness = result.handedness
@@ -122,7 +128,25 @@ def main():
           smoothed_landmarks.append(smoothed_landmark)
         
         # Zastąp oryginalne landmarki wygładzonymi
-        result.hand_landmarks[0] = smoothed_landmarks              
+        result.hand_landmarks[0] = smoothed_landmarks
+        # --- RYSOWANIE ---
+        # Sprawdź odległość między końcówką kciuka (4) i wskazującego (8)
+        thumb_tip = smoothed_landmarks[4]
+        index_tip = smoothed_landmarks[8]
+        x1, y1 = int(thumb_tip.x * width), int(thumb_tip.y * height)
+        x2, y2 = int(index_tip.x * width), int(index_tip.y * height)
+        distance = np.hypot(x2 - x1, y2 - y1)
+        threshold = 50  # pikseli, możesz dostosować
+
+        if distance < threshold:
+            draw_point = (x2, y2)
+            if prev_draw_point is not None:
+                cv2.line(canvas, prev_draw_point, draw_point, (0, 0, 255), 5)
+            else:
+                cv2.circle(canvas, draw_point, 5, (0, 0, 255), -1)
+            prev_draw_point = draw_point
+        else:
+            prev_draw_point = None              
         frame = draw_landmarks_on_image(frame, result)
       else:
         # Dłoń NIE wykryta - wykonaj tylko predict() bez correct()
@@ -149,9 +173,10 @@ def main():
         result.hand_landmarks = [predicted_landmarks]
         result.handedness = last_handedness if last_handedness is not None else []
         frame = draw_landmarks_on_image(frame, result) if last_handedness is not None else frame
-          
+        prev_draw_point = None  # nie rysuj, jeśli nie ma detekcji
       
-      
+      # Nałóż canvas na obraz
+      frame = cv2.addWeighted(frame, 1, canvas, 1, 0)
       # Wyświetl obraz
       cv2.imshow('Hand Tracking', frame)
       

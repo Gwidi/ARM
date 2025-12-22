@@ -15,8 +15,8 @@ class Kalman_Filtering:
         self.kalman = cv2.KalmanFilter(n_states,n_measures)
         kalman = self.kalman
         kalman.transitionMatrix = np.eye(n_states, dtype = np.float32)
-        #kalman.processNoiseCov = np.eye(n_states, dtype = np.float32)*0.9
-        kalman.measurementNoiseCov = np.eye(n_measures, dtype = np.float32)*0.0005
+        kalman.processNoiseCov = np.eye(n_states, dtype = np.float32)*0.8
+        kalman.measurementNoiseCov = np.eye(n_measures, dtype = np.float32)*0.005
 
         kalman.measurementMatrix = np.zeros((n_measures,n_states), np.float32)
 
